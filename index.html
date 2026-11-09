@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>卡诺图草稿本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap">
+<style>
+/* Layout: a ruled notebook page; a pinned pencil-tray toolbar; maps laid on the paper in a wrapping row */
+:root {
+  --paper: #fbf3cf;
+  --paper-hi: #fffaea;
+  --tray: #f4e9b8;
+  --rule: rgba(84, 118, 160, 0.16);
+  --margin: rgba(214, 69, 61, 0.26);
+  --ink: #2c2a24;
+  --ink-2: #7a7360;
+  --ink-3: rgba(44, 42, 36, 0.22);
+  --grid: #4a463a;
+  --accent: #2f5d8a;
+  --warn: #d6453d;
+  --warn-bg: #f9d9cd;
+
+  --f-ui: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-hand: "Patrick Hand", "Comic Neue", "Segoe Print", "PingFang SC", cursive;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --cs: 56px;   /* cell size */
+  --hw: 46px;   /* row-header width */
+  --hh: 34px;   /* column-header height */
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 14px;
+  min-height: 100vh;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--tray);
+}
+@media (min-width: 760px) {
+  body { background-image:
+    linear-gradient(to right, transparent 0 63px, var(--margin) 63px 65px, transparent 65px),
+    repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px); }
+}
+button, input, select { font: inherit; color: inherit; }
+
+/* ---------- toolbar ---------- */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--tray);
+  border-bottom: 1px solid var(--ink-3);
+}
+.bar-in {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+}
+.brand { font-weight: 600; font-size: 15px; letter-spacing: .02em; margin-right: auto; display: flex; align-items: baseline; gap: 8px; }
+.brand small { font-weight: 400; color: var(--ink-2); font-size: 12px; }
+.grp { display: flex; align-items: center; gap: 6px; }
+.grp-label { font-size: 12px; color: var(--ink-2); letter-spacing: .06em; margin-right: 2px; }
+.tb {
+  height: 32px; min-width: 32px; padding: 0 9px;
+  border: 1px solid var(--ink-3); border-radius: 6px;
+  background: var(--paper-hi); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 13px;
+}
+.tb:hover { border-color: var(--ink-2); }
+.tb[aria-pressed="true"] { background: var(--ink); color: var(--paper-hi); border-color: var(--ink); }
+.tb.val { font-family: var(--f-hand); font-size: 21px; padding: 0; width: 34px; line-height: 1; }
+.seg { display: inline-flex; border: 1px solid var(--ink-3); border-radius: 6px; overflow: hidden; }
+.seg .tb { border: 0; border-radius: 0; }
+.seg .tb + .tb { border-left: 1px solid var(--ink-3); }
+.pen {
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--paper-hi);
+  box-shadow: 0 0 0 1px var(--ink-3); cursor: pointer; padding: 0;
+  background: var(--c);
+}
+.pen[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- page ---------- */
+main {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 18px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 760px) { main { padding-left: 92px; } }
+.tip { color: var(--ink-2); font-size: 12.5px; line-height: 1.7; margin: 0 0 18px; max-width: 70ch; }
+.tip b { color: var(--ink); font-weight: 600; }
+.maps { display: flex; flex-wrap: wrap; gap: 36px 44px; align-items: flex-start; }
+
+/* ---------- one map ---------- */
+.kmap { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-width: 100%; }
+.km-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.km-title {
+  font-weight: 700; font-size: 16px; border: 0; background: transparent;
+  border-bottom: 1px dashed transparent; flex: 1 1 6em; min-width: 0; width: 9.5em; padding: 2px 0;
+}
+.km-title:hover, .km-title:focus { border-bottom-color: var(--ink-3); outline: none; }
+.km-head select, .km-head .mini {
+  height: 26px; font-size: 12px; border: 1px solid var(--ink-3); border-radius: 5px;
+  background: var(--paper-hi); padding: 0 6px; cursor: pointer; color: var(--ink-2);
+}
+.km-head .mini:hover { color: var(--ink); border-color: var(--ink-2); }
+.km-scroll { overflow-x: auto; max-width: 100%; padding: 10px 12px 12px 4px; margin: -10px -12px -12px -4px; }
+.km-grid {
+  position: relative; display: grid; width: max-content;
+  grid-template-columns: var(--hw) repeat(var(--C), var(--cs));
+  grid-template-rows: var(--hh) repeat(var(--R), var(--cs));
+}
+.km-corner {
+  position: relative;
+  background: linear-gradient(to top right, transparent calc(50% - .7px), var(--grid) 50%, transparent calc(50% + .7px));
+  font-family: var(--f-hand); font-size: 13px; color: var(--ink);
+}
+.km-corner span {
+  position: absolute; min-width: 1em; padding: 0 1px; line-height: 1.1; outline: none; border-radius: 3px; white-space: nowrap;
+}
+.km-corner span:focus { background: var(--paper-hi); box-shadow: 0 0 0 1px var(--ink-3); }
+.km-corner .lab-row { left: 1px; bottom: 0; }
+.km-corner .lab-col { right: 1px; top: 0; }
+.km-ch, .km-rh {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--f-hand); font-size: 15px; color: var(--ink-2); font-variant-numeric: tabular-nums;
+}
+.km-ch { align-items: flex-end; padding-bottom: 4px; }
+.km-rh { justify-content: flex-end; padding-right: 8px; }
+.km-cell {
+  position: relative; background: var(--paper-hi);
+  border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.km-cell.top { border-top: 1px solid var(--grid); }
+.km-cell.left { border-left: 1px solid var(--grid); }
+.km-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.km-cell:hover { background: #fff6d6; }
+.km-cell.dup { background: var(--warn-bg); }
+.km-cell .v { font-family: var(--f-hand); font-size: 28px; line-height: 1; pointer-events: none; }
+.km-cell .v.one { color: var(--ink); -webkit-text-stroke: .5px var(--ink); }
+.km-cell .v.zero, .km-cell .v.dc { color: var(--ink-2); }
+.km-cell .idx {
+  position: absolute; top: 3px; right: 4px; font: 10px/1 var(--f-mono); color: var(--ink-2); pointer-events: none;
+}
+.km-cell .idx-in {
+  position: absolute; top: 2px; right: 2px; width: 22px; height: 16px; padding: 0;
+  border: 0; border-bottom: 1px dashed var(--ink-3); background: transparent;
+  font: 11px/1 var(--f-mono); color: var(--ink); text-align: center; border-radius: 2px;
+}
+.km-cell .idx-in:focus { outline: none; background: var(--paper); border-bottom-color: var(--accent); }
+.km-cell .idx-in.dup { color: var(--paper-hi); background: var(--warn); border-bottom-color: var(--warn); font-weight: 700; }
+.km-ink { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
+body.drawing .km-ink { pointer-events: auto; cursor: crosshair; touch-action: none; }
+body.rubbing .km-ink { cursor: cell; }
+.km-ink .mk { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.km-ink .mk.pv { stroke-dasharray: 5 4; opacity: .8; }
+
+.km-note { min-height: 0; font-size: 12px; color: var(--warn); }
+.km-note:empty { display: none; }
+.km-expr { display: flex; align-items: baseline; gap: 6px; }
+.km-expr input {
+  flex: 1; min-width: 0; border: 0; border-bottom: 1px solid var(--ink-3); background: transparent;
+  font-family: var(--f-hand); font-size: 18px; padding: 2px 0;
+}
+.km-expr input:focus { outline: none; border-bottom-color: var(--accent); }
+.km-quick summary { font-size: 12px; color: var(--ink-2); cursor: pointer; width: max-content; }
+.km-quick summary:hover { color: var(--ink); }
+.km-quick .qf { display: grid; grid-template-columns: auto 1fr; gap: 6px 8px; align-items: center; margin-top: 8px; font-size: 12px; color: var(--ink-2); }
+.km-quick input { border: 1px solid var(--ink-3); border-radius: 5px; background: var(--paper-hi); padding: 4px 6px; font: 13px var(--f-mono); min-width: 0; }
+.km-quick .qrow { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.km-quick .err { color: var(--warn); }
+
+.add {
+  align-self: stretch; min-height: 120px; min-width: 200px;
+  border: 1.5px dashed var(--ink-3); border-radius: 10px; background: transparent;
+  color: var(--ink-2); cursor: pointer; font-size: 14px;
+}
+.add:hover { color: var(--ink); border-color: var(--ink-2); }
+@media (max-width: 560px) {
+  .bar-in { gap: 8px 12px; padding-block: 8px; }
+  .brand { width: 100%; }
+  .grp-label { display: none; }
+  .pen { width: 22px; height: 22px; }
+  .tb { padding: 0 7px; }
+}
+@media (max-width: 420px) {
+  :root { --cs: 52px; --hw: 42px; }
+  .add { min-width: 100%; min-height: 64px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tb, .pen, .km-cell { transition: background-color .12s, box-shadow .12s, border-color .12s; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand">卡诺图草稿本 <small>K-map</small></div>
+
+    <div class="grp" role="group" aria-label="填写">
+      <span class="grp-label">填写</span>
+      <button class="tb val" data-tool="1" aria-pressed="false" title="填 1">1</button>
+      <button class="tb val" data-tool="0" aria-pressed="false" title="填 0">0</button>
+      <button class="tb val" data-tool="X" aria-pressed="false" title="填 X（无关项）">X</button>
+      <button class="tb" data-tool="erase" aria-pressed="false" title="擦掉格子里的值">擦</button>
+    </div>
+
+    <div class="grp" role="group" aria-label="角标">
+      <span class="grp-label">角标</span>
+      <div class="seg">
+        <button class="tb" data-corner="off" aria-pressed="false">隐藏</button>
+        <button class="tb" data-corner="auto" aria-pressed="false">序号</button>
+        <button class="tb" data-corner="manual" aria-pressed="false">手填</button>
+      </div>
+    </div>
+
+    <div class="grp" role="group" aria-label="画笔">
+      <span class="grp-label">画笔</span>
+      <span id="pens" class="grp"></span>
+      <div class="seg">
+        <button class="tb" data-tool="box" aria-pressed="false" title="拖动框选格子">框</button>
+        <button class="tb" data-tool="free" aria-pressed="false" title="随手画">手绘</button>
+        <button class="tb" data-tool="rub" aria-pressed="false" title="点一下圈把它擦掉">擦圈</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <button class="tb" id="undo" title="撤销 (Ctrl/⌘ + Z)">撤销</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <p class="tip">
+    选 <b>1 / 0 / X</b> 后点格子填写，按住拖动可连续填；再点同一个值会清空。也可以点中格子直接按键盘 <b>1 0 X</b>，方向键移动。
+    选一支彩色笔后用 <b>框</b> 从一个格子拖到另一个格子画圈，跨边界的圈分开画。<b>手填</b> 角标时，重复的序号会标红。
+  </p>
+  <div class="maps" id="maps"></div>
+</main>
+
+<script>
+(() => {
+  const PENS = [
+    ['红', '#d6453d'], ['蓝', '#2f6fb5'], ['绿', '#3c9a4a'],
+    ['紫', '#8a5cc4'], ['橙', '#e08a1e'], ['黑', '#2c2a24'],
+  ];
+  const GRAY = { 1: ['0', '1'], 2: ['00', '01', '11', '10'] };
+  const FILL_TOOLS = ['1', '0', 'X', 'erase'];
+  const DRAW_TOOLS = ['box', 'free', 'rub'];
+  const KEY = 'kmap-notebook-v1';
+
+  const layout = n => {
+    const rb = n === 4 ? 2 : 1, cb = n === 2 ? 1 : 2;
+    return { rb, cb, rows: GRAY[rb], cols: GRAY[cb] };
+  };
+  const defaultLabels = n => n === 4 ? ['AB', 'CD'] : n === 3 ? ['A', 'BC'] : ['A', 'B'];
+  const uid = () => Math.random().toString(36).slice(2, 9);
+
+  function newMap(title, n = 4) {
+    const [rl, cl] = defaultLabels(n);
+    return { id: uid(), title, n, rowLabel: rl, colLabel: cl, cells: {}, corners: {}, expr: '', marks: [] };
+  }
+
+  function sample() {
+    const e = newMap('Segment e');
+    [0, 2, 6, 8].forEach(i => e.cells[i] = '1');
+    [1, 3, 4, 5, 7, 9].forEach(i => e.cells[i] = '0');
+    [10, 11, 12, 13, 14, 15].forEach(i => e.cells[i] = 'X');
+    e.marks = [
+      { t: 'box', r0: 0, c0: 0, r1: 0, c1: 0, color: '#d6453d' },
+      { t: 'box', r0: 0, c0: 3, r1: 0, c1: 3, color: '#d6453d' },
+      { t: 'box', r0: 3, c0: 0, r1: 3, c1: 0, color: '#d6453d' },
+      { t: 'box', r0: 3, c0: 3, r1: 3, c1: 3, color: '#d6453d' },
+      { t: 'box', r0: 0, c0: 3, r1: 3, c1: 3, color: '#2f6fb5' },
+    ];
+    e.expr = "e = B'D' + CD'";
+    return { maps: [e, newMap('Segment g')], cornerMode: 'auto', tool: '1', color: '#d6453d' };
+  }
+
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && Array.isArray(s.maps)) return s;
+    } catch (_) {}
+    return null;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
+  }
+
+  let state = load() || sample();
+  const hist = [];
+  const snap = () => JSON.stringify(state.maps);
+  const pushHist = s => { hist.push(s ?? snap()); if (hist.length > 100) hist.shift(); };
+  function undo() {
+    if (!hist.length) return;
+    state.maps = JSON.parse(hist.pop());
+    renderAll(); save();
+  }
+
+  const mapsEl = document.getElementById('maps');
+  const byId = id => state.maps.find(m => m.id === id);
+
+  /* ---------- toolbar ---------- */
+  const pensEl = document.getElementById('pens');
+  PENS.forEach(([name, c]) => {
+    const b = document.createElement('button');
+    b.className = 'pen'; b.style.setProperty('--c', c);
+    b.dataset.color = c; b.title = name + '笔'; b.setAttribute('aria-label', name + '笔');
+    pensEl.appendChild(b);
+  });
+
+  function syncToolbar() {
+    document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === state.tool));
+    document.querySelectorAll('[data-corner]').forEach(b => b.setAttribute('aria-pressed', b.dataset.corner === state.cornerMode));
+    const drawing = DRAW_TOOLS.includes(state.tool);
+    document.querySelectorAll('.pen').forEach(b => b.setAttribute('aria-pressed', drawing && b.dataset.color === state.color));
+    document.body.classList.toggle('drawing', drawing);
+    document.body.classList.toggle('rubbing', state.tool === 'rub');
+  }
+
+  document.querySelector('.bar').addEventListener('click', ev => {
+    const t = ev.target.closest('[data-tool]');
+    const c = ev.target.closest('[data-corner]');
+    const p = ev.target.closest('.pen');
+    if (t) state.tool = t.dataset.tool;
+    else if (c) { state.cornerMode = c.dataset.corner; renderAll(); }
+    else if (p) { state.color = p.dataset.color; if (!DRAW_TOOLS.includes(state.tool) || state.tool === 'rub') state.tool = 'box'; }
+    else if (ev.target.closest('#undo')) { undo(); return; }
+    else return;
+    syncToolbar(); save();
+  });
+
+  document.addEventListener('keydown', ev => {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && ev.key.toLowerCase() === 'z') {
+      const el = ev.target;
+      if (el.matches && el.matches('input, textarea, [contenteditable]')) return;
+      ev.preventDefault(); undo();
+    }
+  });
+
+  /* text fields: one undo step per edit session */
+  function bindText(el, onInput) {
+    let before = null;
+    el.addEventListener('focus', () => { before = snap(); });
+    el.addEventListener('input', onInput);
+    el.addEventListener('blur', () => { if (before && before !== snap()) pushHist(before); before = null; save(); });
+  }
+
+  /* ---------- render ---------- */
+  function renderAll() {
+    mapsEl.textContent = '';
+    state.maps.forEach(m => mapsEl.appendChild(renderMap(m)));
+    const add = document.createElement('button');
+    add.className = 'add'; add.textContent = '+ 新建一张卡诺图';
+    add.addEventListener('click', () => {
+      pushHist();
+      state.maps.push(newMap('卡诺图 ' + (state.maps.length + 1)));
+      renderAll(); save();
+    });
+    mapsEl.appendChild(add);
+    syncToolbar();
+  }
+
+  function renderMap(m) {
+    const { rows, cols } = layout(m.n);
+    const sec = document.createElement('section');
+    sec.className = 'kmap'; sec.dataset.id = m.id;
+    sec.innerHTML = `
+      <div class="km-head">
+        <input class="km-title" id="t-${m.id}" aria-label="标题">
+        <select class="km-n" id="n-${m.id}" aria-label="变量个数">
+          <option value="4">4 变量</option><option value="3">3 变量</option><option value="2">2 变量</option>
+        </select>
+        <button class="mini km-fill0" title="把空格子都填 0">空格填 0</button>
+        <button class="mini km-clear" title="清空数字、角标和圈">清空</button>
+        <button class="mini km-del">删除</button>
+      </div>
+      <div class="km-scroll"><div class="km-grid"></div></div>
+      <div class="km-note" aria-live="polite"></div>
+      <div class="km-expr"><input id="e-${m.id}" aria-label="化简结果" placeholder="写下化简结果，如 e = B'D' + CD'"></div>
+      <details class="km-quick">
+        <summary>按序号快速填写</summary>
+        <div class="qf">
+          <label for="q1-${m.id}">1 在</label><input id="q1-${m.id}" placeholder="0, 2, 6, 8">
+          <label for="qx-${m.id}">X 在</label><input id="qx-${m.id}" placeholder="10-15">
+          <div class="qrow"><button class="mini tb q-go">填入（其余为 0）</button><span class="err"></span></div>
+        </div>
+      </details>`;
+
+    const title = sec.querySelector('.km-title');
+    title.value = m.title;
+    bindText(title, () => { m.title = title.value; });
+
+    const sel = sec.querySelector('.km-n');
+    sel.value = String(m.n);
+    sel.addEventListener('change', () => {
+      pushHist();
+      const n = +sel.value;
+      Object.assign(m, { n, cells: {}, corners: {}, marks: [] });
+      [m.rowLabel, m.colLabel] = defaultLabels(n);
+      renderAll(); save();
+    });
+
+    sec.querySelector('.km-fill0').addEventListener('click', () => {
+      pushHist();
+      for (let i = 0; i < 1 << m.n; i++) if (!m.cells[i]) m.cells[i] = '0';
+      refreshCells(sec, m); save();
+    });
+    sec.querySelector('.km-clear').addEventListener('click', () => {
+      pushHist();
+      Object.assign(m, { cells: {}, corners: {}, marks: [], expr: '' });
+      renderAll(); save();
+    });
+    sec.querySelector('.km-del').addEventListener('click', () => {
+      pushHist();
+      state.maps = state.maps.filter(x => x !== m);
+      renderAll(); save();
+    });
+
+    const expr = sec.querySelector('.km-expr input');
+    expr.value = m.expr;
+    bindText(expr, () => { m.expr = expr.value; });
+
+    // quick fill
+    const err = sec.querySelector('.km-quick .err');
+    sec.querySelector('.q-go').addEventListener('click', () => {
+      const max = (1 << m.n) - 1;
+      const a = parseList(sec.querySelector(`#q1-${m.id}`).value, max);
+      const b = parseList(sec.querySelector(`#qx-${m.id}`).value, max);
+      const bad = a.error || b.error;
+      if (bad) { err.textContent = bad; return; }
+      const both = [...a.set].filter(i => b.set.has(i));
+      if (both.length) { err.textContent = `${both.join('、')} 同时写在了 1 和 X 里`; return; }
+      err.textContent = '';
+      pushHist();
+      m.cells = {};
+      for (let i = 0; i <= max; i++) m.cells[i] = a.set.has(i) ? '1' : b.set.has(i) ? 'X' : '0';
+      refreshCells(sec, m); save();
+    });
+
+    // grid
+    const grid = sec.querySelector('.km-grid');
+    grid.style.setProperty('--C', cols.length);
+    grid.style.setProperty('--R', rows.length);
+
+    const corner = document.createElement('div');
+    corner.className = 'km-corner';
+    corner.innerHTML = '<span class="lab-row" contenteditable="true" spellcheck="false" aria-label="行变量"></span><span class="lab-col" contenteditable="true" spellcheck="false" aria-label="列变量"></span>';
+    const lr = corner.querySelector('.lab-row'), lc = corner.querySelector('.lab-col');
+    lr.textContent = m.rowLabel; lc.textContent = m.colLabel;
+    [lr, lc].forEach(el => {
+      el.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); } });
+    });
+    bindText(lr, () => { m.rowLabel = lr.textContent; });
+    bindText(lc, () => { m.colLabel = lc.textContent; });
+    grid.appendChild(corner);
+
+    cols.forEach(code => {
+      const h = document.createElement('div'); h.className = 'km-ch'; h.textContent = code; grid.appendChild(h);
+    });
+    rows.forEach((rc, r) => {
+      const h = document.createElement('div'); h.className = 'km-rh'; h.textContent = rc; grid.appendChild(h);
+      cols.forEach((cc, c) => {
+        const i = parseInt(rc + cc, 2);
+        const cell = document.createElement('div');
+        cell.className = 'km-cell' + (r === 0 ? ' top' : '') + (c === 0 ? ' left' : '');
+        cell.tabIndex = 0;
+        Object.assign(cell.dataset, { r, c, i });
+        cell.innerHTML = '<span class="v"></span>';
+        if (state.cornerMode === 'auto') {
+          const s = document.createElement('span'); s.className = 'idx'; s.textContent = i; cell.appendChild(s);
+        } else if (state.cornerMode === 'manual') {
+          const inp = document.createElement('input');
+          inp.className = 'idx-in'; inp.id = `c-${m.id}-${i}`;
+          inp.inputMode = 'numeric'; inp.maxLength = 3; inp.autocomplete = 'off';
+          inp.setAttribute('aria-label', `第 ${r + 1} 行第 ${c + 1} 列的角标`);
+          inp.value = m.corners[i] ?? '';
+          inp.addEventListener('pointerdown', ev => ev.stopPropagation());
+          inp.addEventListener('keydown', ev => ev.stopPropagation());
+          bindText(inp, () => { m.corners[i] = inp.value.trim(); checkDup(sec, m); });
+          cell.appendChild(inp);
+        }
+        grid.appendChild(cell);
+      });
+    });
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.classList.add('km-ink');
+    grid.appendChild(svg);
+
+    wireCells(sec, grid, m);
+    wireInk(grid, svg, m);
+    refreshCells(sec, m);
+    checkDup(sec, m);
+    requestAnimationFrame(() => drawMarks(grid, svg, m));
+    return sec;
+  }
+
+  function parseList(text, max) {
+    const set = new Set();
+    const parts = text.replace(/[^\d\-~]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+    for (const p of parts) {
+      const mm = p.match(/^(\d+)(?:[-~](\d+))?$/);
+      if (!mm) return { set, error: `看不懂 “${p}”，请写成 0, 2, 5-7 这样` };
+      const a = +mm[1], b = mm[2] !== undefined ? +mm[2] : a;
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      if (hi > max) return { set, error: `${hi} 超出了范围，这张图的序号是 0–${max}` };
+      for (let i = lo; i <= hi; i++) set.add(i);
+    }
+    return { set, error: null };
+  }
+
+  /* ---------- cell values ---------- */
+  function refreshCells(sec, m) {
+    sec.querySelectorAll('.km-cell').forEach(cell => {
+      const v = m.cells[cell.dataset.i] || '';
+      const s = cell.querySelector('.v');
+      s.textContent = v;
+      s.className = 'v' + (v === '1' ? ' one' : v === '0' ? ' zero' : v === 'X' ? ' dc' : '');
+      cell.setAttribute('aria-label', `序号 ${cell.dataset.i}：${v || '空'}`);
+    });
+  }
+
+  function setCell(sec, m, i, v) {
+    if (v) m.cells[i] = v; else delete m.cells[i];
+    const cell = sec.querySelector(`.km-cell[data-i="${i}"]`);
+    if (cell) {
+      const s = cell.querySelector('.v');
+      s.textContent = v;
+      s.className = 'v' + (v === '1' ? ' one' : v === '0' ? ' zero' : v === 'X' ? ' dc' : '');
+      cell.setAttribute('aria-label', `序号 ${i}：${v || '空'}`);
+    }
+  }
+
+  function wireCells(sec, grid, m) {
+    let paint = null;
+    grid.addEventListener('pointerdown', ev => {
+      if (!FILL_TOOLS.includes(state.tool)) return;
+      const cell = ev.target.closest('.km-cell');
+      if (!cell) return;
+      ev.preventDefault();
+      cell.focus({ preventScroll: true });
+      const i = cell.dataset.i;
+      const tv = state.tool === 'erase' ? '' : state.tool;
+      const v = (m.cells[i] || '') === tv ? '' : tv;
+      pushHist();
+      setCell(sec, m, i, v);
+      paint = { v, pid: ev.pointerId };
+      try { grid.setPointerCapture(ev.pointerId); } catch (_) {}
+    });
+    const move = ev => {
+      if (!paint || ev.pointerId !== paint.pid) return;
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const cell = el && el.closest('.km-cell');
+      if (cell && grid.contains(cell) && (m.cells[cell.dataset.i] || '') !== paint.v) setCell(sec, m, cell.dataset.i, paint.v);
+    };
+    const end = () => { if (paint) { paint = null; save(); } };
+    grid.addEventListener('pointermove', move);
+    grid.addEventListener('pointerup', end);
+    grid.addEventListener('pointercancel', end);
+
+    grid.addEventListener('keydown', ev => {
+      const cell = ev.target.closest('.km-cell');
+      if (!cell) return;
+      const k = ev.key;
+      const map = { '1': '1', '0': '0', 'x': 'X', 'X': 'X', 'd': 'X', 'D': 'X', 'Backspace': '', 'Delete': '' };
+      if (k in map && !ev.ctrlKey && !ev.metaKey) {
+        ev.preventDefault();
+        pushHist(); setCell(sec, m, cell.dataset.i, map[k]); save();
+        return;
+      }
+      const d = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[k];
+      if (d) {
+        ev.preventDefault();
+        const R = layout(m.n).rows.length, C = layout(m.n).cols.length;
+        const r = (+cell.dataset.r + d[0] + R) % R, c = (+cell.dataset.c + d[1] + C) % C;
+        grid.querySelector(`.km-cell[data-r="${r}"][data-c="${c}"]`).focus();
+      }
+    });
+  }
+
+  /* ---------- corner numbers: flag duplicates ---------- */
+  function checkDup(sec, m) {
+    const note = sec.querySelector('.km-note');
+    if (state.cornerMode !== 'manual') { note.textContent = ''; return; }
+    const norm = s => /^\d+$/.test(s) ? String(+s) : s.toUpperCase();
+    const count = {};
+    Object.values(m.corners).forEach(s => { if (s) { const k = norm(s); count[k] = (count[k] || 0) + 1; } });
+    const dups = new Set(Object.keys(count).filter(k => count[k] > 1));
+    sec.querySelectorAll('.km-cell').forEach(cell => {
+      const inp = cell.querySelector('.idx-in');
+      const on = !!(inp && inp.value.trim() && dups.has(norm(inp.value.trim())));
+      cell.classList.toggle('dup', on);
+      if (inp) inp.classList.toggle('dup', on);
+    });
+    note.textContent = dups.size ? `角标重复：${[...dups].join('、')}` : '';
+  }
+
+  /* ---------- ink (loops & freehand) ---------- */
+  const NS = 'http://www.w3.org/2000/svg';
+  const cellAt = (grid, r, c) => grid.querySelector(`.km-cell[data-r="${r}"][data-c="${c}"]`);
+
+  function boxGeom(grid, b, k) {
+    const a = cellAt(grid, b.r0, b.c0), z = cellAt(grid, b.r1, b.c1);
+    if (!a || !z) return null;
+    const ins = 4 + Math.min(k, 3) * 4;
+    const x = a.offsetLeft + ins, y = a.offsetTop + ins;
+    return { x, y, w: z.offsetLeft + z.offsetWidth - ins - x, h: z.offsetTop + z.offsetHeight - ins - y };
+  }
+  const geom = new WeakMap();   // last drawn box rectangle, for the eraser
+  const unit = grid => { const e = cellAt(grid, 0, 0); return e ? e.offsetWidth : 56; };
+  const overlaps = (a, b) => a.r0 <= b.r1 && b.r0 <= a.r1 && a.c0 <= b.c1 && b.c0 <= a.c1;
+
+  function smoothPath(pts) {
+    if (!pts.length) return '';
+    if (pts.length < 3) return 'M' + pts.map(p => p.join(' ')).join(' L');
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+      d += ` Q${pts[i][0]} ${pts[i][1]} ${mx} ${my}`;
+    }
+    const l = pts[pts.length - 1];
+    return d + ` L${l[0]} ${l[1]}`;
+  }
+
+  function markShape(grid, m, mk, idx, preview) {
+    let el;
+    if (mk.t === 'box') {
+      const k = m.marks.slice(0, idx).filter(o => o.t === 'box' && overlaps(o, mk)).length;
+      const g = boxGeom(grid, mk, k);
+      if (!g) return null;
+      el = document.createElementNS(NS, 'rect');
+      el.setAttribute('x', g.x); el.setAttribute('y', g.y);
+      el.setAttribute('width', Math.max(g.w, 4)); el.setAttribute('height', Math.max(g.h, 4));
+      const rx = Math.min(12, g.w / 2, g.h / 2);
+      el.setAttribute('rx', rx); el.setAttribute('ry', rx);
+      geom.set(mk, g);
+    } else {
+      el = document.createElementNS(NS, 'path');
+      const u = unit(grid);
+      el.setAttribute('d', smoothPath(mk.pts.map(([x, y]) => [+(x * u).toFixed(1), +(y * u).toFixed(1)])));
+    }
+    el.setAttribute('class', 'mk' + (preview ? ' pv' : ''));
+    el.setAttribute('stroke', mk.color);
+    return el;
+  }
+
+  function drawMarks(grid, svg, m, preview) {
+    svg.textContent = '';
+    m.marks.forEach((mk, i) => { const el = markShape(grid, m, mk, i); if (el) svg.appendChild(el); });
+    if (preview) { const el = markShape(grid, m, preview, m.marks.length, preview.t === 'box'); if (el) svg.appendChild(el); }
+  }
+
+  function cellFromPoint(grid, x, y) {
+    const R = grid.querySelectorAll('.km-cell[data-c="0"]').length;
+    const C = grid.querySelectorAll('.km-cell[data-r="0"]').length;
+    let r = 0, c = 0;
+    for (let j = 0; j < C; j++) { const e = cellAt(grid, 0, j); if (x >= e.offsetLeft) c = j; }
+    for (let j = 0; j < R; j++) { const e = cellAt(grid, j, 0); if (y >= e.offsetTop) r = j; }
+    return [r, c];
+  }
+
+  function hitMark(grid, m, x, y) {
+    const u = unit(grid);
+    const tol = 9;
+    for (let i = m.marks.length - 1; i >= 0; i--) {
+      const mk = m.marks[i];
+      const g = geom.get(mk);
+      if (mk.t === 'box' && g) {
+        const inOuter = x >= g.x - tol && x <= g.x + g.w + tol && y >= g.y - tol && y <= g.y + g.h + tol;
+        const inInner = x > g.x + tol && x < g.x + g.w - tol && y > g.y + tol && y < g.y + g.h - tol;
+        if (inOuter && !inInner) return i;
+      } else if (mk.t === 'free') {
+        const p = mk.pts.map(([a, b]) => [a * u, b * u]);
+        for (let j = 0; j < p.length; j++) {
+          const a = p[j], b = p[j + 1] || a;
+          if (segDist(x, y, a, b) < tol + 2) return i;
+        }
+      }
+    }
+    // fall back to the smallest box containing the point
+    let best = -1, area = Infinity;
+    m.marks.forEach((mk, i) => {
+      const g = geom.get(mk);
+      if (mk.t === 'box' && g && x >= g.x && x <= g.x + g.w && y >= g.y && y <= g.y + g.h && g.w * g.h < area) { best = i; area = g.w * g.h; }
+    });
+    return best;
+  }
+  function segDist(px, py, a, b) {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = dx * dx + dy * dy;
+    let t = L ? ((px - a[0]) * dx + (py - a[1]) * dy) / L : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy));
+  }
+
+  function wireInk(grid, svg, m) {
+    let cur = null;
+    const pt = ev => {
+      const r = grid.getBoundingClientRect();
+      return [ev.clientX - r.left, ev.clientY - r.top];
+    };
+    const toUnits = ([x, y]) => { const u = unit(grid); return [Math.round(x / u * 1000) / 1000, Math.round(y / u * 1000) / 1000]; };
+    svg.addEventListener('pointerdown', ev => {
+      if (!DRAW_TOOLS.includes(state.tool)) return;
+      ev.preventDefault();
+      const [x, y] = pt(ev);
+      if (state.tool === 'rub') {
+        const i = hitMark(grid, m, x, y);
+        if (i >= 0) { pushHist(); m.marks.splice(i, 1); drawMarks(grid, svg, m); save(); }
+        return;
+      }
+      svg.setPointerCapture(ev.pointerId);
+      if (state.tool === 'box') {
+        const [r, c] = cellFromPoint(grid, x, y);
+        cur = { t: 'box', ar: r, ac: c, r0: r, c0: c, r1: r, c1: c, color: state.color };
+      } else {
+        cur = { t: 'free', pts: [toUnits([x, y])], color: state.color };
+      }
+      drawMarks(grid, svg, m, cur);
+    });
+    svg.addEventListener('pointermove', ev => {
+      if (!cur) return;
+      const [x, y] = pt(ev);
+      if (cur.t === 'box') {
+        const [r, c] = cellFromPoint(grid, x, y);
+        Object.assign(cur, { r0: Math.min(cur.ar, r), r1: Math.max(cur.ar, r), c0: Math.min(cur.ac, c), c1: Math.max(cur.ac, c) });
+      } else {
+        const u = unit(grid), l = cur.pts[cur.pts.length - 1];
+        if (Math.hypot(x - l[0] * u, y - l[1] * u) >= 2) cur.pts.push(toUnits([x, y]));
+      }
+      drawMarks(grid, svg, m, cur);
+    });
+    const finish = () => {
+      if (!cur) return;
+      const mk = cur; cur = null;
+      if (mk.t === 'box') { delete mk.ar; delete mk.ac; }
+      if (mk.t === 'free' && mk.pts.length < 2) { drawMarks(grid, svg, m); return; }
+      pushHist();
+      m.marks.push(mk);
+      drawMarks(grid, svg, m); save();
+    };
+    svg.addEventListener('pointerup', finish);
+    svg.addEventListener('pointercancel', finish);
+  }
+
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.kmap').forEach(sec => {
+      const m = byId(sec.dataset.id);
+      const grid = sec.querySelector('.km-grid');
+      if (m) drawMarks(grid, grid.querySelector('.km-ink'), m);
+    });
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => window.dispatchEvent(new Event('resize')));
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
