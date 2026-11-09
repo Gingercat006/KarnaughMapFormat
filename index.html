@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>卡诺图草稿本</title>
+<title>K-map Notebook</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
   --warn: #d6453d;
   --warn-bg: #f9d9cd;
 
-  --f-ui: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-ui: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "PingFang SC", sans-serif;
   --f-hand: "Patrick Hand", "Comic Neue", "Segoe Print", "PingFang SC", cursive;
   --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
@@ -65,10 +65,11 @@ button, input, select { font: inherit; color: inherit; }
   padding-block: 10px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
 }
 .brand { font-weight: 600; font-size: 15px; letter-spacing: .02em; margin-right: auto; display: flex; align-items: baseline; gap: 8px; }
 .brand small { font-weight: 400; color: var(--ink-2); font-size: 12px; }
+@media (max-width: 1280px) { .brand small { display: none; } }
 .grp { display: flex; align-items: center; gap: 6px; }
 .grp-label { font-size: 12px; color: var(--ink-2); letter-spacing: .06em; margin-right: 2px; }
 .tb {
@@ -109,7 +110,7 @@ main {
 .km-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .km-title {
   font-weight: 700; font-size: 16px; border: 0; background: transparent;
-  border-bottom: 1px dashed transparent; flex: 1 1 6em; min-width: 0; width: 9.5em; padding: 2px 0;
+  border-bottom: 1px dashed transparent; flex: 1 1 4em; min-width: 0; width: 9.5em; padding: 2px 0;
 }
 .km-title:hover, .km-title:focus { border-bottom-color: var(--ink-3); outline: none; }
 .km-head select, .km-head .mini {
@@ -211,45 +212,45 @@ body.rubbing .km-ink { cursor: cell; }
 
 <div class="bar">
   <div class="bar-in">
-    <div class="brand">卡诺图草稿本 <small>K-map</small></div>
+    <div class="brand">K-map Notebook <small>Karnaugh maps</small></div>
 
-    <div class="grp" role="group" aria-label="填写">
-      <span class="grp-label">填写</span>
-      <button class="tb val" data-tool="1" aria-pressed="false" title="填 1">1</button>
-      <button class="tb val" data-tool="0" aria-pressed="false" title="填 0">0</button>
-      <button class="tb val" data-tool="X" aria-pressed="false" title="填 X（无关项）">X</button>
-      <button class="tb" data-tool="erase" aria-pressed="false" title="擦掉格子里的值">擦</button>
+    <div class="grp" role="group" aria-label="Fill">
+      <span class="grp-label">Fill</span>
+      <button class="tb val" data-tool="1" aria-pressed="false" title="Fill 1">1</button>
+      <button class="tb val" data-tool="0" aria-pressed="false" title="Fill 0">0</button>
+      <button class="tb val" data-tool="X" aria-pressed="false" title="Fill X (don't care)">X</button>
+      <button class="tb" data-tool="erase" aria-pressed="false" title="Clear a cell">Clear</button>
     </div>
 
-    <div class="grp" role="group" aria-label="角标">
-      <span class="grp-label">角标</span>
+    <div class="grp" role="group" aria-label="Corner numbers">
+      <span class="grp-label">Corner #</span>
       <div class="seg">
-        <button class="tb" data-corner="off" aria-pressed="false">隐藏</button>
-        <button class="tb" data-corner="auto" aria-pressed="false">序号</button>
-        <button class="tb" data-corner="manual" aria-pressed="false">手填</button>
+        <button class="tb" data-corner="off" aria-pressed="false">Hide</button>
+        <button class="tb" data-corner="auto" aria-pressed="false">Auto</button>
+        <button class="tb" data-corner="manual" aria-pressed="false">Manual</button>
       </div>
     </div>
 
-    <div class="grp" role="group" aria-label="画笔">
-      <span class="grp-label">画笔</span>
+    <div class="grp" role="group" aria-label="Pen">
+      <span class="grp-label">Pen</span>
       <span id="pens" class="grp"></span>
       <div class="seg">
-        <button class="tb" data-tool="box" aria-pressed="false" title="拖动框选格子">框</button>
-        <button class="tb" data-tool="free" aria-pressed="false" title="随手画">手绘</button>
-        <button class="tb" data-tool="rub" aria-pressed="false" title="点一下圈把它擦掉">擦圈</button>
+        <button class="tb" data-tool="box" aria-pressed="false" title="Drag across cells to draw a loop">Loop</button>
+        <button class="tb" data-tool="free" aria-pressed="false" title="Draw freehand">Free</button>
+        <button class="tb" data-tool="rub" aria-pressed="false" title="Tap a loop to erase it">Erase</button>
       </div>
     </div>
 
     <div class="grp">
-      <button class="tb" id="undo" title="撤销 (Ctrl/⌘ + Z)">撤销</button>
+      <button class="tb" id="undo" title="Undo (Ctrl/⌘ + Z)">Undo</button>
     </div>
   </div>
 </div>
 
 <main>
   <p class="tip">
-    选 <b>1 / 0 / X</b> 后点格子填写，按住拖动可连续填；再点同一个值会清空。也可以点中格子直接按键盘 <b>1 0 X</b>，方向键移动。
-    选一支彩色笔后用 <b>框</b> 从一个格子拖到另一个格子画圈，跨边界的圈分开画。<b>手填</b> 角标时，重复的序号会标红。
+    Pick <b>1 / 0 / X</b> and click cells to fill them; drag to fill several. Clicking the same value again clears it. You can also select a cell and type <b>1 0 X</b>, and move with the arrow keys.
+    Pick a colored pen and use <b>Loop</b> to drag from one cell to another. Draw wrap-around groups as separate loops. With <b>Manual</b> corner numbers, any repeated number turns red.
   </p>
   <div class="maps" id="maps"></div>
 </main>
@@ -257,8 +258,8 @@ body.rubbing .km-ink { cursor: cell; }
 <script>
 (() => {
   const PENS = [
-    ['红', '#d6453d'], ['蓝', '#2f6fb5'], ['绿', '#3c9a4a'],
-    ['紫', '#8a5cc4'], ['橙', '#e08a1e'], ['黑', '#2c2a24'],
+    ['Red', '#d6453d'], ['Blue', '#2f6fb5'], ['Green', '#3c9a4a'],
+    ['Purple', '#8a5cc4'], ['Orange', '#e08a1e'], ['Black', '#2c2a24'],
   ];
   const GRAY = { 1: ['0', '1'], 2: ['00', '01', '11', '10'] };
   const FILL_TOOLS = ['1', '0', 'X', 'erase'];
@@ -322,7 +323,7 @@ body.rubbing .km-ink { cursor: cell; }
   PENS.forEach(([name, c]) => {
     const b = document.createElement('button');
     b.className = 'pen'; b.style.setProperty('--c', c);
-    b.dataset.color = c; b.title = name + '笔'; b.setAttribute('aria-label', name + '笔');
+    b.dataset.color = c; b.title = name + ' pen'; b.setAttribute('aria-label', name + ' pen');
     pensEl.appendChild(b);
   });
 
@@ -368,10 +369,10 @@ body.rubbing .km-ink { cursor: cell; }
     mapsEl.textContent = '';
     state.maps.forEach(m => mapsEl.appendChild(renderMap(m)));
     const add = document.createElement('button');
-    add.className = 'add'; add.textContent = '+ 新建一张卡诺图';
+    add.className = 'add'; add.textContent = '+ New K-map';
     add.addEventListener('click', () => {
       pushHist();
-      state.maps.push(newMap('卡诺图 ' + (state.maps.length + 1)));
+      state.maps.push(newMap('K-map ' + (state.maps.length + 1)));
       renderAll(); save();
     });
     mapsEl.appendChild(add);
@@ -384,23 +385,23 @@ body.rubbing .km-ink { cursor: cell; }
     sec.className = 'kmap'; sec.dataset.id = m.id;
     sec.innerHTML = `
       <div class="km-head">
-        <input class="km-title" id="t-${m.id}" aria-label="标题">
-        <select class="km-n" id="n-${m.id}" aria-label="变量个数">
-          <option value="4">4 变量</option><option value="3">3 变量</option><option value="2">2 变量</option>
+        <input class="km-title" id="t-${m.id}" aria-label="Title">
+        <select class="km-n" id="n-${m.id}" aria-label="Number of variables">
+          <option value="4">4 vars</option><option value="3">3 vars</option><option value="2">2 vars</option>
         </select>
-        <button class="mini km-fill0" title="把空格子都填 0">空格填 0</button>
-        <button class="mini km-clear" title="清空数字、角标和圈">清空</button>
-        <button class="mini km-del">删除</button>
+        <button class="mini km-fill0" title="Fill every empty cell with 0">Fill 0s</button>
+        <button class="mini km-clear" title="Clear values, corner numbers and loops">Reset</button>
+        <button class="mini km-del">Delete</button>
       </div>
       <div class="km-scroll"><div class="km-grid"></div></div>
       <div class="km-note" aria-live="polite"></div>
-      <div class="km-expr"><input id="e-${m.id}" aria-label="化简结果" placeholder="写下化简结果，如 e = B'D' + CD'"></div>
+      <div class="km-expr"><input id="e-${m.id}" aria-label="Simplified expression" placeholder="Write the result, e.g. e = B'D' + CD'"></div>
       <details class="km-quick">
-        <summary>按序号快速填写</summary>
+        <summary>Quick fill by minterm</summary>
         <div class="qf">
-          <label for="q1-${m.id}">1 在</label><input id="q1-${m.id}" placeholder="0, 2, 6, 8">
-          <label for="qx-${m.id}">X 在</label><input id="qx-${m.id}" placeholder="10-15">
-          <div class="qrow"><button class="mini tb q-go">填入（其余为 0）</button><span class="err"></span></div>
+          <label for="q1-${m.id}">1 at</label><input id="q1-${m.id}" placeholder="0, 2, 6, 8">
+          <label for="qx-${m.id}">X at</label><input id="qx-${m.id}" placeholder="10-15">
+          <div class="qrow"><button class="mini tb q-go">Fill (rest = 0)</button><span class="err"></span></div>
         </div>
       </details>`;
 
@@ -447,7 +448,7 @@ body.rubbing .km-ink { cursor: cell; }
       const bad = a.error || b.error;
       if (bad) { err.textContent = bad; return; }
       const both = [...a.set].filter(i => b.set.has(i));
-      if (both.length) { err.textContent = `${both.join('、')} 同时写在了 1 和 X 里`; return; }
+      if (both.length) { err.textContent = `${both.join(', ')} ${both.length > 1 ? 'are' : 'is'} listed under both 1 and X`; return; }
       err.textContent = '';
       pushHist();
       m.cells = {};
@@ -462,7 +463,7 @@ body.rubbing .km-ink { cursor: cell; }
 
     const corner = document.createElement('div');
     corner.className = 'km-corner';
-    corner.innerHTML = '<span class="lab-row" contenteditable="true" spellcheck="false" aria-label="行变量"></span><span class="lab-col" contenteditable="true" spellcheck="false" aria-label="列变量"></span>';
+    corner.innerHTML = '<span class="lab-row" contenteditable="true" spellcheck="false" aria-label="Row variables"></span><span class="lab-col" contenteditable="true" spellcheck="false" aria-label="Column variables"></span>';
     const lr = corner.querySelector('.lab-row'), lc = corner.querySelector('.lab-col');
     lr.textContent = m.rowLabel; lc.textContent = m.colLabel;
     [lr, lc].forEach(el => {
@@ -490,7 +491,7 @@ body.rubbing .km-ink { cursor: cell; }
           const inp = document.createElement('input');
           inp.className = 'idx-in'; inp.id = `c-${m.id}-${i}`;
           inp.inputMode = 'numeric'; inp.maxLength = 3; inp.autocomplete = 'off';
-          inp.setAttribute('aria-label', `第 ${r + 1} 行第 ${c + 1} 列的角标`);
+          inp.setAttribute('aria-label', `Corner number, row ${r + 1}, column ${c + 1}`);
           inp.value = m.corners[i] ?? '';
           inp.addEventListener('pointerdown', ev => ev.stopPropagation());
           inp.addEventListener('keydown', ev => ev.stopPropagation());
@@ -518,10 +519,10 @@ body.rubbing .km-ink { cursor: cell; }
     const parts = text.replace(/[^\d\-~]+/g, ' ').trim().split(/\s+/).filter(Boolean);
     for (const p of parts) {
       const mm = p.match(/^(\d+)(?:[-~](\d+))?$/);
-      if (!mm) return { set, error: `看不懂 “${p}”，请写成 0, 2, 5-7 这样` };
+      if (!mm) return { set, error: `Can't read "${p}". Write it like 0, 2, 5-7` };
       const a = +mm[1], b = mm[2] !== undefined ? +mm[2] : a;
       const lo = Math.min(a, b), hi = Math.max(a, b);
-      if (hi > max) return { set, error: `${hi} 超出了范围，这张图的序号是 0–${max}` };
+      if (hi > max) return { set, error: `${hi} is out of range. This map uses 0–${max}` };
       for (let i = lo; i <= hi; i++) set.add(i);
     }
     return { set, error: null };
@@ -534,7 +535,7 @@ body.rubbing .km-ink { cursor: cell; }
       const s = cell.querySelector('.v');
       s.textContent = v;
       s.className = 'v' + (v === '1' ? ' one' : v === '0' ? ' zero' : v === 'X' ? ' dc' : '');
-      cell.setAttribute('aria-label', `序号 ${cell.dataset.i}：${v || '空'}`);
+      cell.setAttribute('aria-label', `Minterm ${cell.dataset.i}: ${v || 'empty'}`);
     });
   }
 
@@ -545,7 +546,7 @@ body.rubbing .km-ink { cursor: cell; }
       const s = cell.querySelector('.v');
       s.textContent = v;
       s.className = 'v' + (v === '1' ? ' one' : v === '0' ? ' zero' : v === 'X' ? ' dc' : '');
-      cell.setAttribute('aria-label', `序号 ${i}：${v || '空'}`);
+      cell.setAttribute('aria-label', `Minterm ${i}: ${v || 'empty'}`);
     }
   }
 
@@ -610,7 +611,7 @@ body.rubbing .km-ink { cursor: cell; }
       cell.classList.toggle('dup', on);
       if (inp) inp.classList.toggle('dup', on);
     });
-    note.textContent = dups.size ? `角标重复：${[...dups].join('、')}` : '';
+    note.textContent = dups.size ? `Repeated corner number: ${[...dups].join(', ')}` : '';
   }
 
   /* ---------- ink (loops & freehand) ---------- */
